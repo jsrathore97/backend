@@ -396,13 +396,123 @@ app.get('/api/getSchoolList' , (req,res)=>{
 
 //GET ALL CLASS LIST 
 app.get('/api/getClassList' , (req,res)=>{
-    let sql = `select id,school_name from class` ; 
+    let sql = `select id,class_fullName,class_shortName from class` ; 
     db.query(sql , function (err , result){
         console.log('1222525252525582858289',result);
         if(err){
             console.log(err);
         } else{
             res.json(result);
+        }
+    })
+})
+
+//GET ALL UNIVERSITY LIST 
+app.get('/api/getUniversityList' , (req,res)=>{
+    let sql = `select id,univ_full_name,univ_short_name from university` ; 
+    db.query(sql , function (err , result){
+        console.log(result);
+        if(err){
+            console.log(err);
+        } else{
+            res.json(result);
+        }
+    })
+})
+
+
+app.post('/api/addStudent', (req , res)=>{
+    async function addStudent(){
+        let classResponse = await get_class(req.body.student_class_id);
+        let schoolResponse = await get_school(req.body.student_school_id);
+        let universityResponse = await get_university(req.body.student_university_id);
+        let addStudentRes =  await add_student(req.body  , classResponse  , schoolResponse  ,  universityResponse );
+        if(addStudentRes.length > 0){
+            res.json(addStudentRes);
+        } else{
+            res.json("something went wrong")
+        }
+    }
+    addStudent();
+})
+
+function  get_class(classId){
+    return new Promise(function (resolve , reject){
+        let sql = `select class_shortName from class where id = ${classId}` ; 
+        db.query(sql , function(err, result){
+            if(err){
+             console.log(err)
+            } else{
+                resolve(result);
+            }
+        })
+    })
+}
+
+
+function get_school(schoolId){
+ return new Promise(function (resolve , reject){
+    let sql2 = `select school_name from school where id = ${schoolId}` ; 
+    db.query(sql2 , function(err, result){
+        if(err){
+         console.log(err)
+        } else{
+            resolve(result);
+        }
+    })
+    })
+}
+
+
+function get_university(universityId){
+    return new Promise(function (resolve , reject){
+        let sql3 = `select univ_full_name from university where id = ${universityId}` ; 
+        db.query(sql3 , function(err, result){
+            if(err){
+             console.log(err)
+            } else{
+              resolve(result);
+            }
+        })
+    })
+}
+
+function add_student(alldata , classData , schoolData  , universityData){
+    return new Promise(function (resolve , reject){
+        let sql = `insert into student set ?`;
+        let data = {
+            student_name :  alldata.student_name,
+            student_f_name : alldata.student_f_name,
+            student_m_name  : alldata.student_m_name,
+            student_city  :  alldata.student_city,
+            student_admissiontype : alldata.student_admissionType,
+            student_mob : alldata.student_mob,
+
+            student_class : classData[0].class_shortName,
+            student_school : schoolData[0].school_name,
+            student_university : universityData[0].univ_full_name
+        }
+        db.query(sql , data , function(err , result){
+            if(err){
+                console.log(err)
+            } else{
+                resolve("success");
+            }
+        })
+    })   
+}
+
+app.get('/api/getAllStudents' , (req,res)=>{
+    let sql = `select * from student` ;
+    db.query(sql , function(err,result){
+        if(err){
+            console.log(err)
+        }  else{
+            if(result.length > 0){
+                res.json(result);
+            } else{
+                res.json("spmething went wrong")
+            }
         }
     })
 })
